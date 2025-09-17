@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Giulia's Birthday Countdown 🎀</title>
+  <link rel="icon" href="data:image/svg+xml,%F0%9F%8E%80" />
+  <style>
+    :root {
+      --bg1: #ffe4f2;
+      --bg2: #ffb6da;
+      --bg3: #ff94c2;
+      --accent: #ff5fad;
+      --accent2: #ff85c1;
+      --text: #5b184e;
+      --muted: #9c3f7a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1000px at 30% 20%, var(--bg2), transparent),
+                  radial-gradient(1200px at 80% 80%, var(--bg3), transparent),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      background-attachment: fixed;
+    }
+    .wrap {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: min(900px, 95vw);
+      border: 2px solid #fff0fa;
+      background: rgba(255,255,255,.6);
+      backdrop-filter: blur(6px);
+      border-radius: 24px;
+      padding: clamp(20px, 3vw, 36px);
+      box-shadow: 0 20px 50px rgba(255, 100, 200, .3);
+      text-align: center;
+    }
+    h1 {
+      font-size: clamp(28px, 5vw, 52px);
+      margin: 0 0 8px;
+      color: var(--accent);
+      text-shadow: 0 2px 6px rgba(255,100,200,.5);
+    }
+    .date-line {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: clamp(14px, 2.3vw, 18px);
+    }
+    .timer {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 10px 0 24px;
+    }
+    .unit {
+      padding: clamp(14px, 2.5vw, 20px);
+      border-radius: 20px;
+      background: linear-gradient(180deg, #fff0f9, #ffe4f2);
+      border: 2px solid #ffc2e0;
+      box-shadow: 0 6px 14px rgba(255,120,200,.3);
+    }
+    .value {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(32px, 8vw, 70px);
+      line-height: 1;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .label {
+      margin-top: 6px;
+      font-size: clamp(12px, 2vw, 16px);
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .celebrate {
+      font-size: clamp(28px, 6vw, 58px);
+      margin: 12px 0;
+      background: linear-gradient(90deg, #ff5fad, #ff85c1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 900;
+      text-shadow: 0 2px 8px rgba(255,120,200,.4);
+    }
+    .hidden { display: none; }
+    .name-line {
+      margin-top: 8px;
+      font-size: clamp(16px, 2.8vw, 22px);
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    canvas#confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Compliment toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(20px);
+      max-width: min(640px, 92vw);
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 2px solid #ffc2e0;
+      background: #fff0fa;
+      color: var(--accent);
+      font-size: clamp(15px, 2.5vw, 20px);
+      line-height: 1.35;
+      opacity: 0;
+      transition: opacity .4s ease, transform .4s ease;
+      box-shadow: 0 10px 30px rgba(255, 100, 200, .4);
+      z-index: 10;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast .tag {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: .7em;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ff5fad, #ff85c1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+<canvas id="confetti" class="hidden"></canvas>
+<div class="wrap">
+  <div class="card">
+    <h1>Countdown to Giulia’s Birthday 🎀</h1>
+    <p class="date-line">
+      Target date: <span id="targetText"></span>
+    </p>
+
+    <div id="countdown" class="timer">
+      <div class="unit"><div id="days" class="value">–</div><div class="label">Days</div></div>
+      <div class="unit"><div id="hours" class="value">–</div><div class="label">Hours</div></div>
+      <div class="unit"><div id="mins" class="value">–</div><div class="label">Minutes</div></div>
+      <div class="unit"><div id="secs" class="value">–</div><div class="label">Seconds</div></div>
+    </div>
+
+    <p id="done" class="celebrate hidden">🎉 Happy Birthday Giulia! 🎉</p>
+    <p class="name-line">For: Giulia 💕</p>
+    <p class="footer">Counting down to September 28 in your local time.</p>
+  </div>
+</div>
+
+<div id="complimentToast" class="toast">
+  <span class="tag">Compliment</span><span id="complimentText">Giulia, you sparkle! ✨</span>
+</div>
+
+<script>
+(function () {
+  const els = {
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    mins: document.getElementById('mins'),
+    secs: document.getElementById('secs'),
+    targetText: document.getElementById('targetText'),
+    done: document.getElementById('done'),
+    countdown: document.getElementById('countdown'),
+    confetti: document.getElementById('confetti'),
+    toast: document.getElementById('complimentToast'),
+    toastText: document.getElementById('complimentText')
+  };
+
+  const BDAY_MONTH = 8; // September
+  const BDAY_DAY = 28;
+  let target = nextBirthdayDate();
+
+  function nextBirthdayDate() {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), BDAY_MONTH, BDAY_DAY, 0, 0, 0, 0);
+    if (now > target) target.setFullYear(target.getFullYear() + 1);
+    return target;
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function refreshTargetText() {
+    const fmt = new Intl.DateTimeFormat(undefined, {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    els.targetText.textContent = fmt.format(target);
+  }
+  refreshTargetText();
+
+  function update() {
+    const now = Date.now();
+    const t = target.getTime();
+    let diff = Math.max(0, t - now);
+    const SEC=1000, MIN=60*SEC, HOUR=60*MIN, DAY=24*HOUR;
+
+    const d = Math.floor(diff / DAY); diff -= d*DAY;
+    const h = Math.floor(diff / HOUR); diff -= h*HOUR;
+    const m = Math.floor(diff / MIN); diff -= m*MIN;
+    const s = Math.floor(diff / SEC);
+
+    els.days.textContent = d;
+    els.hours.textContent = pad(h);
+    els.mins.textContent = pad(m);
+    els.secs.textContent = pad(s);
+
+    if (t - now <= 0) {
+      els.countdown.classList.add('hidden');
+      els.done.classList.remove('hidden');
+      confetti.start();
+      setTimeout(() => {
+        target.setFullYear(target.getFullYear() + 1);
+        refreshTargetText();
+        els.countdown.classList.remove('hidden');
+        els.done.classList.add('hidden');
+      }, 7000);
+    }
+  }
+  setInterval(update, 1000);
+  update();
+
+  // Confetti
+  const confetti = (() => {
+    const canvas = els.confetti;
+    const ctx = canvas.getContext('2d');
+    let W, H, pieces = [], running=false, rafId=null;
+    function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+    addEventListener('resize', resize);
+    function spawn(n=160){ pieces = Array.from({length:n}, ()=>({
+      x:Math.random()*W,y:-20-Math.random()*H,s:5+Math.random()*6,
+      a:Math.random()*Math.PI*2,v:1+Math.random()*3,w:0.02+Math.random()*0.05,o:0.7+Math.random()*0.3
+    })); }
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      pieces.forEach(p=>{
+        p.y+=p.v; p.x+=Math.sin(p.a); p.a+=p.w;
+        if(p.y>H+10) p.y=-20;
+        ctx.globalAlpha=p.o;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a);
+        ctx.fillStyle=`hsl(${(p.a*180/Math.PI*3)%360},80%,70%)`;
+        ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*1.5);
+        ctx.restore();
+      });
+      rafId=requestAnimationFrame(draw);
+    }
+    return { start(){ if(running) return; resize(); spawn(); canvas.classList.remove('hidden');
+      running=true; draw(); setTimeout(()=>this.stop(),6000); },
+      stop(){ if(!running)return; running=false; cancelAnimationFrame(rafId);
+      ctx.clearRect(0,0,W,H); canvas.classList.add('hidden'); } };
+  })();
+
+  // Compliments
+  const compliments = [
+      "Giulia, you sparkle brighter than diamonds 💎",
+  "Your smile is pure sunshine 🌸",
+  "Giulia, you make the world prettier 💕",
+  "You’re sweeter than cotton candy 🍭",
+  "Giulia, you’re a dream wrapped in glitter ✨",
+  "You’re fabulous and fearless 🌟",
+  "Giulia, you light up every room 🎀",
+  "You’re prettier than a pink sunset 🌅",
+  "Giulia, you’re pure magic ✨",
+  "You make hearts flutter like butterflies 🦋",
+  "Giulia, you shine brighter than stardust 🌌",
+  "Your laugh is music to the soul 🎶",
+  "Giulia, you’re a fairytale come true 📖✨",
+  "You glow like the morning sun 🌞",
+  "Giulia, you’re the queen of cuteness 👑💕",
+  "You’re dazzling inside and out 💖",
+  "Giulia, you’re a rainbow in human form 🌈",
+  "You sparkle like champagne bubbles 🥂",
+  "Giulia, you’re a masterpiece in pink 🎨",
+  "Your kindness outshines the stars ⭐",
+  "Giulia, you’re sweeter than strawberry cake 🍰",
+  "You’re prettier than a bouquet of roses 🌹",
+  "Giulia, you’re sunshine mixed with sugar 🌼🍬",
+  "You light up the darkest days ☀️",
+  "Giulia, you’re pure joy in human form 🎉",
+  "You’re magical like a unicorn 🦄",
+  "Giulia, you’re a gentle breeze on a summer day 🌺",
+  "Your soul sparkles like crystal ✨",
+  "Giulia, you’re cuter than a baby bunny 🐰",
+  "You radiate happiness like confetti 🎊",
+  "Giulia, you’re a candle in every storm 🕯️",
+  "You’re sweeter than peaches in summer 🍑",
+  "Giulia, you’re as rare as a four-leaf clover 🍀",
+  "You glow like fairy lights in the night 🌙",
+  "Giulia, you’re breathtaking as a starry sky 🌌",
+  "You’re prettier than cherry blossoms 🌸",
+  "Giulia, you shine like rose gold ✨",
+  "You’re sweeter than marshmallows in cocoa ☕🍬",
+  "Giulia, you’re a poem written in colors 🎨",
+  "You’re the sparkle in every celebration 🎀",
+  "Giulia, you’re warmer than sunshine ☀️💕",
+  "You’re a melody that never fades 🎵",
+  "Giulia, you’re as soft as clouds ☁️",
+  "You’re sweeter than honey drizzled pancakes 🥞🍯",
+  "Giulia, you’re love wrapped in sparkles 💝",
+  "You glow brighter than fireworks 🎆",
+  "Giulia, you’re a garden in full bloom 🌷🌼",
+  "You’re more precious than pearls 🐚",
+  "Giulia, you’re a smile waiting to happen 😊",
+  "You’re a wish come true on a birthday cake 🎂✨",
+  "Giulia, you’re sweeter than bubblegum 🍬",
+  "You shine like glitter on fresh snow ❄️✨",
+  "Giulia, you’re a cozy hug in human form 🤗",
+  "You’re prettier than twinkling fireflies 🌟",
+  "Giulia, you’re happiness bottled up 🎀",
+  "You’re sweeter than cherries on top 🍒",
+  "Giulia, you’re an endless summer day ☀️",
+  "You glow like neon lights at midnight 💖",
+  "Giulia, you’re the heartbeat of joy 💓",
+  "You’re lovelier than soft pink petals 🌸",
+  "Giulia, you’re the sparkle in champagne 🥂✨",
+  "You’re as magical as falling snowflakes ❄️",
+  "Giulia, you’re the prettiest rainbow 🌈",
+  "You’re sweeter than a frosted cupcake 🧁",
+  "Giulia, you shine like a diamond heart 💎💗",
+  "You’re pure stardust and sunshine 🌞✨",
+  "Giulia, you’re the glow after golden hour 🌅",
+  "You’re cuter than a basket of kittens 🐱💕",
+  "Giulia, you make hearts skip a beat 💓",
+  "You’re as dreamy as a cotton-candy sky 🌸☁️",
+  "Giulia, you’re light wrapped in love 💕",
+"Giulia, Tak Ho loves you very much 💕",
+"Giulia, Tak Ho is crazy for you 🌹",
+  "You sparkle more than fairy wings 🧚",
+  "Giulia, you’re a star that never fades 🌟",
+  "You’re prettier than morning dew on roses 🌹",
+  "Giulia, you’re as rare as moonlight on snow ❄️🌙",
+  "You’re sweeter than caramel drizzle 🍮",
+  "Giulia, you shine like fireworks of joy 🎇",
+  "You’re more radiant than golden sunlight ☀️",
+  "Giulia, you’re poetry made real ✨",
+  "You’re lovelier than wildflowers in spring 🌼",
+  "Giulia, you’re the sparkle in every jewel 💎",
+  "You’re sweeter than pink lemonade 🍹",
+  "Giulia, you’re the magic in every smile 😊✨",
+  "You glow like lanterns in the night 🏮",
+  "Giulia, you’re a pastel dream 🌸",
+  "You’re the glitter in every celebration 🎊",
+  "Giulia, you’re cuteness personified 💕",
+  "You’re prettier than a rainbow after rain 🌈",
+  "Giulia, you’re love at first sight 💘",
+  "You’re the sparkle that never fades ✨"
+  ];
+
+  // Shuffle compliments
+  for (let i = compliments.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [compliments[i], compliments[j]] = [compliments[j], compliments[i]];
+  }
+
+  let complimentIndex = 0;
+  function showCompliment() {
+    els.toastText.textContent = compliments[complimentIndex % compliments.length];
+    complimentIndex++;
+    els.toast.classList.add('show');
+    clearTimeout(showCompliment._hideTimer);
+    showCompliment._hideTimer = setTimeout(() => els.toast.classList.remove('show'), 4000);
+  }
+
+  // Start showing compliments
+  setTimeout(showCompliment, 1000);
+  setInterval(showCompliment, 10000);
+})();
+</script>
+</body>
+</html>
