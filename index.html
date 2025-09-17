@@ -48,6 +48,20 @@
       color: var(--accent);
       text-shadow: 0 2px 6px rgba(255,100,200,.5);
     }
+    .clock-line {
+      margin: 6px 0 18px;
+      font-size: clamp(20px, 3.5vw, 28px);
+      font-weight: bold;
+      transition: color 0.5s ease, text-shadow 0.5s ease;
+    }
+    .clock-day {
+      color: var(--muted);
+      text-shadow: none;
+    }
+    .clock-night {
+      color: #fff;
+      text-shadow: 0 0 8px #ff5fad, 0 0 16px #ff85c1;
+    }
     .date-line {
       margin: 0 0 20px;
       color: var(--muted);
@@ -107,7 +121,6 @@
       inset: 0;
       pointer-events: none;
     }
-
     /* Compliment toast */
     .toast {
       position: fixed;
@@ -144,8 +157,7 @@
       background-clip: text;
       color: transparent;
     }
-
-    /* Extra flashy celebration text */
+    /* Flashy celebration text */
     .flashy {
       animation: flash 1s infinite alternate;
     }
@@ -160,23 +172,22 @@
 <div class="wrap">
   <div class="card">
     <h1>Countdown to Giulia’s Birthday 🎀</h1>
+    <!-- Clock -->
+    <p id="clock" class="clock-line">--:--</p>
     <p class="date-line">
       Target date: <span id="targetText"></span>
     </p>
-
     <div id="countdown" class="timer">
       <div class="unit"><div id="days" class="value">–</div><div class="label">Days</div></div>
       <div class="unit"><div id="hours" class="value">–</div><div class="label">Hours</div></div>
       <div class="unit"><div id="mins" class="value">–</div><div class="label">Minutes</div></div>
       <div class="unit"><div id="secs" class="value">–</div><div class="label">Seconds</div></div>
     </div>
-
     <p id="done" class="celebrate hidden">🎉 Happy Birthday Giulia! 🎉</p>
     <p class="name-line">For: Giulia 💕</p>
     <p class="footer">Counting down to September 28 at 23:15 in your local time.</p>
   </div>
 </div>
-
 <div id="complimentToast" class="toast">
   <span class="tag">Compliment</span><span id="complimentText">Giulia, you sparkle! ✨</span>
 </div>
@@ -191,12 +202,12 @@
     targetText: document.getElementById('targetText'),
     done: document.getElementById('done'),
     countdown: document.getElementById('countdown'),
-    confetti: document.getElementById('confetti'),
+    clock: document.getElementById('clock'),
     toast: document.getElementById('complimentToast'),
     toastText: document.getElementById('complimentText')
   };
 
-  const BDAY_MONTH = 8; // September (0-indexed)
+  const BDAY_MONTH = 8; // September
   const BDAY_DAY = 28;
   const BDAY_HOUR = 23;
   const BDAY_MINUTE = 15;
@@ -221,7 +232,21 @@
   }
   refreshTargetText();
 
-  function update() {
+  function updateClock() {
+    const now = new Date();
+    const h = pad(now.getHours());
+    const m = pad(now.getMinutes());
+    els.clock.textContent = `${h}:${m}`;
+    if (now.getHours() >= 19 || now.getHours() < 7) {
+      els.clock.classList.add("clock-night");
+      els.clock.classList.remove("clock-day");
+    } else {
+      els.clock.classList.add("clock-day");
+      els.clock.classList.remove("clock-night");
+    }
+  }
+
+  function updateCountdown() {
     const now = Date.now();
     const t = target.getTime();
     let diff = Math.max(0, t - now);
@@ -245,12 +270,18 @@
       bigCelebration();
     }
   }
-  setInterval(update, 1000);
-  update();
+
+  // Celebration
+  function bigCelebration() {
+    confetti.start();
+    setTimeout(()=>confetti.stop(),15000);
+    let finaleCompliments = setInterval(showCompliment, 3000);
+    setTimeout(()=>clearInterval(finaleCompliments),15000);
+  }
 
   // Confetti
   const confetti = (() => {
-    const canvas = els.confetti;
+    const canvas = document.getElementById('confetti');
     const ctx = canvas.getContext('2d');
     let W, H, pieces = [], running=false, rafId=null;
     function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
@@ -277,14 +308,6 @@
       stop(){ if(!running)return; running=false; cancelAnimationFrame(rafId);
       ctx.clearRect(0,0,W,H); canvas.classList.add('hidden'); } };
   })();
-
-  function bigCelebration() {
-    confetti.start();
-    setTimeout(()=>confetti.stop(),15000);
-
-    let finaleCompliments = setInterval(showCompliment, 3000);
-    setTimeout(()=>clearInterval(finaleCompliments),15000);
-  }
 
   // Compliments
   const compliments = [
@@ -380,13 +403,11 @@
   "You’re prettier than a rainbow after rain 🌈",
   "Giulia, you’re love at first sight 💘",
   "You’re the sparkle that never fades ✨"
-  ];
-
+  ]; 
   for (let i = compliments.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [compliments[i], compliments[j]] = [compliments[j], compliments[i]];
   }
-
   let complimentIndex = 0;
   function showCompliment() {
     els.toastText.textContent = compliments[complimentIndex % compliments.length];
@@ -396,6 +417,10 @@
     showCompliment._hideTimer = setTimeout(() => els.toast.classList.remove('show'), 4000);
   }
 
+  // Loops
+  setInterval(() => { updateClock(); updateCountdown(); }, 1000);
+  updateClock();
+  updateCountdown();
   setTimeout(showCompliment, 1000);
   setInterval(showCompliment, 10000);
 })();
